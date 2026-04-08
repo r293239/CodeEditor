@@ -419,148 +419,60 @@
 
     <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/loader.js"></script>
     <script>
+        // Wait for DOM to be ready
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeEditor();
+        });
+
         let editor;
         let currentFile = 'index.html';
         
+        // File contents
         const files = {
             'index.html': {
                 name: 'index.html',
                 language: 'html',
-                content: `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Project</title>
-    <link rel="stylesheet" href="styles.css">
-</head>
-<body>
-    <div class="container">
-        <h1>Welcome to Code Editor Pro</h1>
-        <p>Start building your project here!</p>
-        <button onclick="greet()">Click Me</button>
-        <p id="message"></p>
-    </div>
-    <script src="script.js"></script>
-</body>
-</html>`
+                content: '<!DOCTYPE html>\n<html lang="en">\n<head>\n    <meta charset="UTF-8">\n    <meta name="viewport" content="width=device-width, initial-scale=1.0">\n    <title>My Project</title>\n    <link rel="stylesheet" href="styles.css">\n</head>\n<body>\n    <div class="container">\n        <h1>Welcome to Code Editor Pro</h1>\n        <p>Start building your project here!</p>\n        <button onclick="greet()">Click Me</button>\n        <p id="message"></p>\n    </div>\n    <script src="script.js"></script>\n</body>\n</html>'
             },
             'styles.css': {
                 name: 'styles.css',
                 language: 'css',
-                content: `* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.container {
-    background: white;
-    padding: 40px;
-    border-radius: 10px;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-    text-align: center;
-}
-
-h1 {
-    color: #333;
-    margin-bottom: 20px;
-}
-
-p {
-    color: #666;
-    margin-bottom: 20px;
-}
-
-button {
-    background: #667eea;
-    color: white;
-    border: none;
-    padding: 12px 30px;
-    border-radius: 25px;
-    font-size: 16px;
-    cursor: pointer;
-    transition: transform 0.2s;
-}
-
-button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
-}
-
-#message {
-    margin-top: 20px;
-    font-weight: bold;
-    color: #667eea;
-}`
+                content: '* {\n    margin: 0;\n    padding: 0;\n    box-sizing: border-box;\n}\n\nbody {\n    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;\n    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);\n    min-height: 100vh;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n}\n\n.container {\n    background: white;\n    padding: 40px;\n    border-radius: 10px;\n    box-shadow: 0 20px 60px rgba(0,0,0,0.3);\n    text-align: center;\n}\n\nh1 {\n    color: #333;\n    margin-bottom: 20px;\n}\n\np {\n    color: #666;\n    margin-bottom: 20px;\n}\n\nbutton {\n    background: #667eea;\n    color: white;\n    border: none;\n    padding: 12px 30px;\n    border-radius: 25px;\n    font-size: 16px;\n    cursor: pointer;\n    transition: transform 0.2s;\n}\n\nbutton:hover {\n    transform: translateY(-2px);\n    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);\n}\n\n#message {\n    margin-top: 20px;\n    font-weight: bold;\n    color: #667eea;\n}'
             },
             'script.js': {
                 name: 'script.js',
                 language: 'javascript',
-                content: `function greet() {
-    const messageElement = document.getElementById('message');
-    messageElement.textContent = 'Hello from JavaScript!';
-    console.log('Button clicked!');
-}
-
-class Calculator {
-    constructor() {
-        this.result = 0;
-    }
-    
-    add(n) {
-        this.result += n;
-        return this;
-    }
-    
-    subtract(n) {
-        this.result -= n;
-        return this;
-    }
-    
-    getResult() {
-        return this.result;
-    }
-}
-
-const calc = new Calculator();
-console.log('Calculator ready! Try calc.add(5).subtract(2).getResult()');`
+                content: 'function greet() {\n    const messageElement = document.getElementById("message");\n    messageElement.textContent = "Hello from JavaScript!";\n    console.log("Button clicked!");\n}\n\nclass Calculator {\n    constructor() {\n        this.result = 0;\n    }\n    \n    add(n) {\n        this.result += n;\n        return this;\n    }\n    \n    subtract(n) {\n        this.result -= n;\n        return this;\n    }\n    \n    getResult() {\n        return this.result;\n    }\n}\n\nconst calc = new Calculator();\nconsole.log("Calculator ready! Try calc.add(5).subtract(2).getResult()");'
             }
         };
 
-        require.config({ paths: { vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs' } });
-        require(['vs/editor/editor.main'], function() {
-            editor = monaco.editor.create(document.getElementById('editor-container'), {
-                value: files['index.html'].content,
-                language: 'html',
-                theme: 'vs-dark',
-                automaticLayout: true,
-                fontSize: 14,
-                fontFamily: 'Consolas, "Courier New", monospace',
-                minimap: { enabled: true },
-                scrollBeyondLastLine: false,
-                lineNumbers: 'on',
-                glyphMargin: true,
-                folding: true,
-                bracketPairColorization: { enabled: true }
-            });
+        function initializeEditor() {
+            require.config({ paths: { vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs' } });
+            require(['vs/editor/editor.main'], function() {
+                editor = monaco.editor.create(document.getElementById('editor-container'), {
+                    value: files['index.html'].content,
+                    language: 'html',
+                    theme: 'vs-dark',
+                    automaticLayout: true,
+                    fontSize: 14,
+                    fontFamily: 'Consolas, "Courier New", monospace',
+                    minimap: { enabled: true },
+                    scrollBeyondLastLine: false,
+                    lineNumbers: 'on',
+                    glyphMargin: true,
+                    folding: true,
+                    bracketPairColorization: { enabled: true }
+                });
 
-            editor.onDidChangeCursorPosition((e) => {
-                document.getElementById('cursorPosition').textContent = 
-                    `Ln ${e.position.lineNumber}, Col ${e.position.column}`;
-            });
+                editor.onDidChangeCursorPosition((e) => {
+                    document.getElementById('cursorPosition').textContent = 
+                        'Ln ' + e.position.lineNumber + ', Col ' + e.position.column;
+                });
 
-            overrideConsole();
-        });
+                overrideConsole();
+                addConsoleMessage('log', ['Code Editor Pro ready!']);
+            });
+        }
 
         function overrideConsole() {
             const originalLog = console.log;
@@ -593,8 +505,8 @@ console.log('Calculator ready! Try calc.add(5).subtract(2).getResult()');`
 
             const consoleDiv = document.getElementById('console-output');
             const line = document.createElement('div');
-            line.className = `console-line console-${type}`;
-            line.textContent = `> ${message}`;
+            line.className = 'console-line console-' + type;
+            line.textContent = '> ' + message;
             consoleDiv.appendChild(line);
             consoleDiv.scrollTop = consoleDiv.scrollHeight;
         }
@@ -632,7 +544,7 @@ console.log('Calculator ready! Try calc.add(5).subtract(2).getResult()');`
                 return;
             }
 
-            document.querySelector(`.tab[data-file="${filename}"]`).remove();
+            document.querySelector('.tab[data-file="' + filename + '"]').remove();
             delete files[filename];
 
             if (currentFile === filename) {
@@ -652,7 +564,7 @@ console.log('Calculator ready! Try calc.add(5).subtract(2).getResult()');`
             a.click();
             URL.revokeObjectURL(url);
 
-            addConsoleMessage('log', [`Saved: ${currentFile}`]);
+            addConsoleMessage('log', ['Saved: ' + currentFile]);
         }
 
         function saveAllFiles() {
@@ -681,16 +593,16 @@ console.log('Calculator ready! Try calc.add(5).subtract(2).getResult()');`
             const fileTree = document.getElementById('fileTree');
             const li = document.createElement('li');
             li.className = 'file-item';
-            li.onclick = () => switchToFile(filename);
-            li.innerHTML = `<i class="fab ${icon}"></i> ${filename}`;
+            li.onclick = function() { switchToFile(filename); };
+            li.innerHTML = '<i class="fab ' + icon + '"></i> ' + filename;
             fileTree.appendChild(li);
 
             const tabs = document.getElementById('editorTabs');
             const tab = document.createElement('div');
             tab.className = 'tab';
             tab.dataset.file = filename;
-            tab.innerHTML = `<i class="fab ${icon}"></i> ${filename}
-                <span class="close-tab" onclick="closeTab(event, '${filename}')">×</span>`;
+            tab.innerHTML = '<i class="fab ' + icon + '"></i> ' + filename +
+                '<span class="close-tab" onclick="closeTab(event, \'' + filename + '\')">×</span>';
             tabs.appendChild(tab);
 
             switchToFile(filename);
@@ -712,18 +624,11 @@ console.log('Calculator ready! Try calc.add(5).subtract(2).getResult()');`
             if (currentFile.endsWith('.html')) {
                 doc.write(files[currentFile].content);
             } else {
-                doc.write(`
-                    <!DOCTYPE html>
-                    <html>
-                    <head>
-                        <style>${files['styles.css']?.content || ''}</style>
-                    </head>
-                    <body>
-                        <div id="app"></div>
-                        <script>${files['script.js']?.content || ''}</script>
-                    </body>
-                    </html>
-                `);
+                doc.write('<!DOCTYPE html>\n<html>\n<head>\n<style>' + 
+                    (files['styles.css']?.content || '') + 
+                    '</style>\n</head>\n<body>\n<div id="app"></div>\n<script>' + 
+                    (files['script.js']?.content || '') + 
+                    '</script>\n</body>\n</html>');
             }
             doc.close();
             
@@ -753,10 +658,10 @@ console.log('Calculator ready! Try calc.add(5).subtract(2).getResult()');`
         function openFile() {
             const input = document.createElement('input');
             input.type = 'file';
-            input.onchange = (e) => {
+            input.onchange = function(e) {
                 const file = e.target.files[0];
                 const reader = new FileReader();
-                reader.onload = (event) => {
+                reader.onload = function(event) {
                     const filename = file.name;
                     const extension = filename.split('.').pop();
                     let language = 'plaintext';
@@ -775,16 +680,16 @@ console.log('Calculator ready! Try calc.add(5).subtract(2).getResult()');`
                     const fileTree = document.getElementById('fileTree');
                     const li = document.createElement('li');
                     li.className = 'file-item';
-                    li.onclick = () => switchToFile(filename);
-                    li.innerHTML = `<i class="fab ${icon}"></i> ${filename}`;
+                    li.onclick = function() { switchToFile(filename); };
+                    li.innerHTML = '<i class="fab ' + icon + '"></i> ' + filename;
                     fileTree.appendChild(li);
                     
                     const tabs = document.getElementById('editorTabs');
                     const tab = document.createElement('div');
                     tab.className = 'tab';
                     tab.dataset.file = filename;
-                    tab.innerHTML = `<i class="fab ${icon}"></i> ${filename}
-                        <span class="close-tab" onclick="closeTab(event, '${filename}')">×</span>`;
+                    tab.innerHTML = '<i class="fab ' + icon + '"></i> ' + filename +
+                        '<span class="close-tab" onclick="closeTab(event, \'' + filename + '\')">×</span>';
                     tabs.appendChild(tab);
                     
                     switchToFile(filename);
@@ -809,18 +714,13 @@ console.log('Calculator ready! Try calc.add(5).subtract(2).getResult()');`
         function performGitHubAction() {
             const action = document.getElementById('modalTitle').dataset.action;
             const repoUrl = document.getElementById('repoUrl').value;
-            const commitMessage = document.getElementById('commitMessage').value || 'Update code';
             
             if (action === 'push') {
-                const pushUrl = `https://github.com/new?name=${repoUrl}&description=Created with Code Editor Pro`;
+                const pushUrl = 'https://github.com/new?name=' + repoUrl;
                 window.open(pushUrl, '_blank');
-                addConsoleMessage('log', [`Opening GitHub: ${repoUrl}`]);
+                addConsoleMessage('log', ['Opening GitHub: ' + repoUrl]);
             } else if (action === 'clone') {
-                if (repoUrl.includes('github.com')) {
-                    addConsoleMessage('log', [`Cloning from: ${repoUrl}`]);
-                } else {
-                    addConsoleMessage('error', ['Invalid GitHub URL']);
-                }
+                addConsoleMessage('log', ['Cloning from: ' + repoUrl]);
             }
             
             closeModal();
@@ -843,10 +743,6 @@ console.log('Calculator ready! Try calc.add(5).subtract(2).getResult()');`
         function showSettings() {
             addConsoleMessage('log', ['Settings panel coming soon!']);
         }
-
-        window.onload = function() {
-            addConsoleMessage('log', ['Code Editor Pro ready!']);
-        };
     </script>
 </body>
 </html>
