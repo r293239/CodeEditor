@@ -1,296 +1,963 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Code Editor</title>
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code Editor Pro</title>
+    
+    <!-- Monaco Editor (VS Code's Editor) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/editor/editor.main.css">
+    
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: 'Courier New', monospace;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
             background: #1e1e1e;
-            color: #d4d4d4;
-            padding: 20px;
-        }
-        .editor {
-            background: #252526;
-            border: 1px solid #3e3e42;
-            padding: 20px;
-            border-radius: 5px;
-            height: 300px;
-            overflow-y: auto;
-            margin-bottom: 15px;
-        }
-        #code {
-            width: 100%;
-            height: 100%;
-            background: transparent;
-            color: #9cdcfe;
-            border: none;
-            font-family: 'Courier New', monospace;
-            font-size: 14px;
-            resize: none;
-            outline: none;
-        }
-        .button-container {
+            color: #cccccc;
+            height: 100vh;
             display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-bottom: 15px;
+            flex-direction: column;
+            overflow: hidden;
         }
-        button {
+
+        /* Title Bar */
+        .title-bar {
+            background: #323233;
+            padding: 8px 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #3e3e42;
+            -webkit-app-region: drag;
+        }
+
+        .title-bar h2 {
+            font-size: 14px;
+            font-weight: 500;
+            color: #cccccc;
+        }
+
+        .title-bar h2 i {
+            color: #007acc;
+            margin-right: 8px;
+        }
+
+        .window-controls {
+            display: flex;
+            gap: 8px;
+            -webkit-app-region: no-drag;
+        }
+
+        .window-controls button {
+            background: transparent;
+            border: none;
+            color: #cccccc;
+            cursor: pointer;
+            padding: 5px 10px;
+            font-size: 14px;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+
+        .window-controls button:hover {
+            background: #3e3e42;
+        }
+
+        /* Main Container */
+        .main-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 250px;
+            background: #252526;
+            border-right: 1px solid #3e3e42;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            padding: 12px;
+            font-size: 11px;
+            text-transform: uppercase;
+            font-weight: 600;
+            color: #cccccc;
+            letter-spacing: 0.5px;
+        }
+
+        .file-explorer {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0 8px;
+        }
+
+        .file-tree {
+            list-style: none;
+        }
+
+        .file-item {
+            padding: 5px 8px;
+            cursor: pointer;
+            border-radius: 4px;
+            margin: 2px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            transition: background 0.2s;
+        }
+
+        .file-item:hover {
+            background: #2a2d2e;
+        }
+
+        .file-item.active {
+            background: #37373d;
+        }
+
+        .file-item i {
+            width: 16px;
+            color: #6a9955;
+        }
+
+        .file-item .fa-html5 { color: #e44d26; }
+        .file-item .fa-css3-alt { color: #264de4; }
+        .file-item .fa-js { color: #f7df1e; }
+
+        /* Editor Area */
+        .editor-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .editor-tabs {
+            background: #252526;
+            display: flex;
+            padding: 0 8px;
+            border-bottom: 1px solid #3e3e42;
+            overflow-x: auto;
+        }
+
+        .tab {
+            padding: 8px 15px;
+            cursor: pointer;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            border-right: 1px solid #3e3e42;
+            background: #2d2d30;
+            transition: background 0.2s;
+        }
+
+        .tab.active {
+            background: #1e1e1e;
+            border-top: 2px solid #007acc;
+        }
+
+        .tab:hover {
+            background: #3e3e42;
+        }
+
+        .tab i {
+            font-size: 12px;
+        }
+
+        .tab .close-tab {
+            margin-left: 8px;
+            opacity: 0.6;
+            transition: opacity 0.2s;
+        }
+
+        .tab .close-tab:hover {
+            opacity: 1;
+        }
+
+        #editor-container {
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* Bottom Panel */
+        .bottom-panel {
+            background: #1e1e1e;
+            border-top: 1px solid #3e3e42;
+            height: 200px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-header {
+            background: #252526;
+            padding: 5px 15px;
+            display: flex;
+            gap: 20px;
+            border-bottom: 1px solid #3e3e42;
+        }
+
+        .panel-tab {
+            padding: 5px 0;
+            cursor: pointer;
+            font-size: 12px;
+            border-bottom: 2px solid transparent;
+        }
+
+        .panel-tab.active {
+            border-bottom-color: #007acc;
+            color: white;
+        }
+
+        .panel-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+
+        #console-output {
+            color: #d4d4d4;
+            line-height: 1.6;
+        }
+
+        .console-line {
+            padding: 2px 0;
+        }
+
+        .console-error {
+            color: #f48771;
+        }
+
+        .console-warn {
+            color: #cca700;
+        }
+
+        /* Status Bar */
+        .status-bar {
             background: #007acc;
             color: white;
+            padding: 3px 15px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        /* Buttons */
+        .toolbar {
+            background: #323233;
+            padding: 5px 10px;
+            display: flex;
+            gap: 5px;
+            border-bottom: 1px solid #3e3e42;
+        }
+
+        .toolbar-btn {
+            background: transparent;
             border: none;
-            padding: 10px 20px;
-            border-radius: 3px;
+            color: #cccccc;
+            padding: 6px 12px;
             cursor: pointer;
+            font-size: 13px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: background 0.2s;
         }
-        button:hover {
-            background: #005a9e;
+
+        .toolbar-btn:hover {
+            background: #3e3e42;
         }
-        button.export {
-            background: #238636;
+
+        .toolbar-btn i {
+            font-size: 14px;
         }
-        button.export:hover {
-            background: #196327;
+
+        .separator {
+            width: 1px;
+            background: #3e3e42;
+            margin: 0 5px;
         }
-        #output {
-            background: #0e0e0e;
-            padding: 15px;
-            margin-top: 10px;
-            border-radius: 3px;
+
+        /* Modal */
+        .modal {
             display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
         }
-        .export-options {
-            margin-top: 10px;
+
+        .modal-content {
+            background: #2d2d30;
+            border-radius: 8px;
+            padding: 25px;
+            min-width: 400px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        }
+
+        .modal-header {
+            font-size: 18px;
+            margin-bottom: 20px;
+            color: white;
+        }
+
+        .modal-input {
+            width: 100%;
+            padding: 10px;
+            background: #1e1e1e;
+            border: 1px solid #3e3e42;
+            color: white;
+            border-radius: 4px;
+            margin-bottom: 15px;
+        }
+
+        .modal-buttons {
             display: flex;
             gap: 10px;
+            justify-content: flex-end;
         }
-        .export-btn {
-            padding: 8px 15px;
-            font-size: 12px;
-            background: #333;
+
+        .modal-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
         }
-        .export-btn:hover {
-            background: #444;
+
+        .modal-btn.primary {
+            background: #007acc;
+            color: white;
         }
-        .export-btn.html {
-            background: #e34c26;
+
+        .modal-btn.primary:hover {
+            background: #005a9e;
         }
-        .export-btn.css {
-            background: #264de4;
+
+        .modal-btn.secondary {
+            background: #3e3e42;
+            color: white;
         }
-        .export-btn.js {
-            background: #f0db4f;
-            color: #333;
+
+        .modal-btn.secondary:hover {
+            background: #4e4e52;
         }
     </style>
 </head>
 <body>
-    <h1>📝 HTML Playground</h1>
-    <p>Test HTML/CSS/JavaScript code:</p>
-    
-    <div class="editor">
-        <textarea id="code" spellcheck="false">
-<!DOCTYPE html>
-<html>
-<body>
-    <h1>Hello World</h1>
-    <p>Start coding here...</p>
-    <button onclick="alert('Hello!')">Click Me</button>
-</body>
-</html>
-        </textarea>
+    <!-- Title Bar -->
+    <div class="title-bar">
+        <h2><i class="fas fa-code"></i> Code Editor Pro</h2>
+        <div class="window-controls">
+            <button onclick="toggleFullscreen()"><i class="fas fa-expand"></i></button>
+            <button onclick="showSettings()"><i class="fas fa-cog"></i></button>
+        </div>
     </div>
-    
-    <div class="button-container">
-        <button onclick="runCode()">▶ Run Code</button>
-        <button class="export" onclick="showExportOptions()">💾 Export Code</button>
-        <button onclick="loadExample()">📁 Load Example</button>
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+        <button class="toolbar-btn" onclick="newFile()"><i class="fas fa-file"></i> New</button>
+        <button class="toolbar-btn" onclick="openFile()"><i class="fas fa-folder-open"></i> Open</button>
+        <button class="toolbar-btn" onclick="saveFile()"><i class="fas fa-save"></i> Save</button>
+        <button class="toolbar-btn" onclick="saveAllFiles()"><i class="fas fa-save"></i> Save All</button>
+        <div class="separator"></div>
+        <button class="toolbar-btn" onclick="runCode()"><i class="fas fa-play"></i> Run</button>
+        <button class="toolbar-btn" onclick="formatCode()"><i class="fas fa-align-left"></i> Format</button>
+        <button class="toolbar-btn" onclick="toggleConsole()"><i class="fas fa-terminal"></i> Console</button>
+        <div class="separator"></div>
+        <button class="toolbar-btn" onclick="pushToGitHub()"><i class="fab fa-github"></i> Push to GitHub</button>
+        <button class="toolbar-btn" onclick="cloneFromGitHub()"><i class="fas fa-cloud-download-alt"></i> Clone</button>
     </div>
-    
-    <div id="output"></div>
-    
-    <script>
-        // Legitimate code runner
-        function runCode() {
-            const code = document.getElementById('code').value;
-            const output = document.getElementById('output');
-            output.innerHTML = '<iframe style="width:100%;height:400px;border:none;"></iframe>';
-            const iframe = output.querySelector('iframe');
-            
-            // Write the code to iframe
-            const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-            iframeDoc.open();
-            iframeDoc.write(code);
-            iframeDoc.close();
-            
-            output.style.display = 'block';
-        }
-        
-        // Show export options
-        function showExportOptions() {
-            const output = document.getElementById('output');
-            output.innerHTML = `
-                <h3>Export Options</h3>
-                <p>Choose the format to export your code:</p>
-                <div class="export-options">
-                    <button class="export-btn html" onclick="exportAsHTML()">Export as HTML</button>
-                    <button class="export-btn css" onclick="exportAsCSS()">Export as CSS</button>
-                    <button class="export-btn js" onclick="exportAsJS()">Export as JavaScript</button>
+
+    <!-- Main Container -->
+    <div class="main-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">EXPLORER</div>
+            <div class="file-explorer">
+                <ul class="file-tree" id="fileTree">
+                    <li class="file-item" onclick="switchToFile('index.html')">
+                        <i class="fab fa-html5"></i> index.html
+                    </li>
+                    <li class="file-item" onclick="switchToFile('styles.css')">
+                        <i class="fab fa-css3-alt"></i> styles.css
+                    </li>
+                    <li class="file-item" onclick="switchToFile('script.js')">
+                        <i class="fab fa-js"></i> script.js
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Editor Area -->
+        <div class="editor-area">
+            <div class="editor-tabs" id="editorTabs">
+                <div class="tab active" data-file="index.html">
+                    <i class="fab fa-html5"></i> index.html
+                    <span class="close-tab" onclick="closeTab(event, 'index.html')">×</span>
                 </div>
-            `;
-            output.style.display = 'block';
-        }
-        
-        // Export as HTML file
-        function exportAsHTML() {
-            const code = document.getElementById('code').value;
-            const blob = new Blob([code], { type: 'text/html' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'my-code.html';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        }
-        
-        // Export as CSS file - extract CSS from code
-        function exportAsCSS() {
-            const code = document.getElementById('code').value;
-            
-            // Try to extract CSS from style tags
-            const styleMatch = code.match(/<style[^>]*>([\s\S]*?)<\/style>/i);
-            let cssContent = '';
-            
-            if (styleMatch && styleMatch[1]) {
-                cssContent = styleMatch[1].trim();
-            } else {
-                // If no CSS found, create a basic CSS file
-                cssContent = `/* CSS extracted from your code */
+                <div class="tab" data-file="styles.css">
+                    <i class="fab fa-css3-alt"></i> styles.css
+                    <span class="close-tab" onclick="closeTab(event, 'styles.css')">×</span>
+                </div>
+                <div class="tab" data-file="script.js">
+                    <i class="fab fa-js"></i> script.js
+                    <span class="close-tab" onclick="closeTab(event, 'script.js')">×</span>
+                </div>
+            </div>
+            <div id="editor-container"></div>
+        </div>
+    </div>
+
+    <!-- Bottom Panel -->
+    <div class="bottom-panel" id="bottomPanel">
+        <div class="panel-header">
+            <div class="panel-tab active" onclick="switchPanel('console')">CONSOLE</div>
+            <div class="panel-tab" onclick="switchPanel('output')">OUTPUT</div>
+            <div class="panel-tab" onclick="switchPanel('problems')">PROBLEMS</div>
+        </div>
+        <div class="panel-content" id="panelContent">
+            <div id="console-output"></div>
+        </div>
+    </div>
+
+    <!-- Status Bar -->
+    <div class="status-bar">
+        <div class="status-item">
+            <i class="fas fa-code-branch"></i> main
+        </div>
+        <div class="status-item">
+            <span id="cursorPosition">Ln 1, Col 1</span>
+        </div>
+        <div class="status-item">
+            <i class="fas fa-check-circle"></i> No Problems
+        </div>
+    </div>
+
+    <!-- GitHub Modal -->
+    <div class="modal" id="githubModal">
+        <div class="modal-content">
+            <div class="modal-header" id="modalTitle">Push to GitHub</div>
+            <input type="text" class="modal-input" id="repoUrl" placeholder="Repository URL or name">
+            <input type="text" class="modal-input" id="commitMessage" placeholder="Commit message">
+            <div class="modal-buttons">
+                <button class="modal-btn secondary" onclick="closeModal()">Cancel</button>
+                <button class="modal-btn primary" onclick="performGitHubAction()">Push</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/loader.js"></script>
+    <script>
+        let editor;
+        let currentFile = 'index.html';
+        const files = {
+            'index.html': {
+                name: 'index.html',
+                language: 'html',
+                content: `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Project</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Welcome to Code Editor Pro</h1>
+        <p>Start building your project here!</p>
+        <button onclick="greet()">Click Me</button>
+        <p id="message"></p>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>`
+            },
+            'styles.css': {
+                name: 'styles.css',
+                language: 'css',
+                content: `* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
 body {
-    font-family: Arial, sans-serif;
-    margin: 20px;
-    background-color: #f0f0f0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.container {
+    background: white;
+    padding: 40px;
+    border-radius: 10px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    text-align: center;
 }
 
 h1 {
     color: #333;
+    margin-bottom: 20px;
 }
 
 p {
     color: #666;
-}`;
-            }
-            
-            const blob = new Blob([cssContent], { type: 'text/css' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'styles.css';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        }
-        
-        // Export as JavaScript file - extract JS from code
-        function exportAsJS() {
-            const code = document.getElementById('code').value;
-            
-            // Try to extract JavaScript from script tags
-            const scriptMatch = code.match(/<script[^>]*>([\s\S]*?)<\/script>/i);
-            let jsContent = '';
-            
-            if (scriptMatch && scriptMatch[1]) {
-                jsContent = scriptMatch[1].trim();
-            } else {
-                // If no JS found, create a basic JS file
-                jsContent = `// JavaScript extracted from your code
-
-console.log('Hello from JavaScript!');
-
-function greet() {
-    alert('Hello!');
+    margin-bottom: 20px;
 }
 
-// Call the function
-greet();`;
+button {
+    background: #667eea;
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 25px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+#message {
+    margin-top: 20px;
+    font-weight: bold;
+    color: #667eea;
+}`
+            },
+            'script.js': {
+                name: 'script.js',
+                language: 'javascript',
+                content: `// JavaScript for your project
+
+function greet() {
+    const messageElement = document.getElementById('message');
+    messageElement.textContent = 'Hello from JavaScript!';
+    console.log('Button clicked!');
+}
+
+// Example of more advanced code
+class Calculator {
+    constructor() {
+        this.result = 0;
+    }
+    
+    add(n) {
+        this.result += n;
+        return this;
+    }
+    
+    subtract(n) {
+        this.result -= n;
+        return this;
+    }
+    
+    getResult() {
+        return this.result;
+    }
+}
+
+// You can test the calculator in the console
+const calc = new Calculator();
+console.log('Calculator ready! Try calc.add(5).subtract(2).getResult()');`
             }
+        };
+
+        let consoleMessages = [];
+
+        // Initialize Monaco Editor
+        require.config({ paths: { vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs' } });
+        require(['vs/editor/editor.main'], function() {
+            editor = monaco.editor.create(document.getElementById('editor-container'), {
+                value: files['index.html'].content,
+                language: 'html',
+                theme: 'vs-dark',
+                automaticLayout: true,
+                fontSize: 14,
+                fontFamily: 'Consolas, "Courier New", monospace',
+                minimap: { enabled: true },
+                scrollBeyondLastLine: false,
+                lineNumbers: 'on',
+                glyphMargin: true,
+                folding: true,
+                bracketPairColorization: { enabled: true }
+            });
+
+            // Track cursor position
+            editor.onDidChangeCursorPosition((e) => {
+                document.getElementById('cursorPosition').textContent = 
+                    `Ln ${e.position.lineNumber}, Col ${e.position.column}`;
+            });
+
+            // Override console methods
+            overrideConsole();
+        });
+
+        // Override console methods to display in our panel
+        function overrideConsole() {
+            const originalLog = console.log;
+            const originalError = console.error;
+            const originalWarn = console.warn;
+
+            console.log = function(...args) {
+                originalLog.apply(console, args);
+                addConsoleMessage('log', args);
+            };
+
+            console.error = function(...args) {
+                originalError.apply(console, args);
+                addConsoleMessage('error', args);
+            };
+
+            console.warn = function(...args) {
+                originalWarn.apply(console, args);
+                addConsoleMessage('warn', args);
+            };
+        }
+
+        function addConsoleMessage(type, args) {
+            const message = args.map(arg => {
+                if (typeof arg === 'object') {
+                    return JSON.stringify(arg, null, 2);
+                }
+                return String(arg);
+            }).join(' ');
+
+            const consoleDiv = document.getElementById('console-output');
+            const line = document.createElement('div');
+            line.className = `console-line console-${type}`;
+            line.textContent = `> ${message}`;
+            consoleDiv.appendChild(line);
+            consoleDiv.scrollTop = consoleDiv.scrollHeight;
+        }
+
+        // Switch between files
+        function switchToFile(filename) {
+            if (currentFile === filename) return;
+
+            // Save current file content
+            files[currentFile].content = editor.getValue();
+
+            // Switch to new file
+            currentFile = filename;
+            const file = files[filename];
             
-            const blob = new Blob([jsContent], { type: 'text/javascript' });
+            // Update editor
+            monaco.editor.setModelLanguage(editor.getModel(), file.language);
+            editor.setValue(file.content);
+
+            // Update tabs
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+                if (tab.dataset.file === filename) {
+                    tab.classList.add('active');
+                }
+            });
+
+            // Update file tree
+            document.querySelectorAll('.file-item').forEach(item => {
+                item.classList.remove('active');
+            });
+        }
+
+        // Close tab
+        function closeTab(event, filename) {
+            event.stopPropagation();
+            
+            if (Object.keys(files).length === 1) {
+                alert('Cannot close the last file');
+                return;
+            }
+
+            const tab = document.querySelector(`.tab[data-file="${filename}"]`);
+            if (tab) {
+                tab.remove();
+            }
+
+            delete files[filename];
+
+            if (currentFile === filename) {
+                const firstFile = Object.keys(files)[0];
+                switchToFile(firstFile);
+            }
+        }
+
+        // Save file
+        function saveFile() {
+            files[currentFile].content = editor.getValue();
+            
+            // Download file
+            const blob = new Blob([editor.getValue()], { type: 'text/plain' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'script.js';
-            document.body.appendChild(a);
+            a.download = currentFile;
             a.click();
-            document.body.removeChild(a);
             URL.revokeObjectURL(url);
+
+            addConsoleMessage('log', [`File "${currentFile}" saved`]);
         }
-        
-        function loadExample() {
-            document.getElementById('code').value = `
-<!DOCTYPE html>
-<html>
-<head>
-    <style>
-        body { 
-            background: linear-gradient(45deg, #667eea, #764ba2);
-            color: white;
-            font-family: Arial;
-            padding: 40px;
-            text-align: center;
+
+        // Save all files
+        function saveAllFiles() {
+            files[currentFile].content = editor.getValue();
+            
+            // Create a zip file with all files
+            // For simplicity, we'll just log it
+            addConsoleMessage('log', ['All files saved']);
         }
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 30px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+
+        // New file
+        function newFile() {
+            const filename = prompt('Enter file name (e.g., newfile.js):');
+            if (!filename) return;
+
+            const extension = filename.split('.').pop();
+            let language = 'plaintext';
+            if (extension === 'html') language = 'html';
+            else if (extension === 'css') language = 'css';
+            else if (extension === 'js') language = 'javascript';
+
+            files[filename] = {
+                name: filename,
+                language: language,
+                content: ''
+            };
+
+            // Add to file tree
+            const fileTree = document.getElementById('fileTree');
+            const li = document.createElement('li');
+            li.className = 'file-item';
+            li.onclick = () => switchToFile(filename);
+            
+            let icon = 'fa-file';
+            if (extension === 'html') icon = 'fa-html5';
+            else if (extension === 'css') icon = 'fa-css3-alt';
+            else if (extension === 'js') icon = 'fa-js';
+            
+            li.innerHTML = `<i class="fab ${icon}"></i> ${filename}`;
+            fileTree.appendChild(li);
+
+            // Add tab
+            const tabs = document.getElementById('editorTabs');
+            const tab = document.createElement('div');
+            tab.className = 'tab';
+            tab.dataset.file = filename;
+            tab.innerHTML = `<i class="fab ${icon}"></i> ${filename}
+                <span class="close-tab" onclick="closeTab(event, '${filename}')">×</span>`;
+            tabs.appendChild(tab);
+
+            switchToFile(filename);
         }
-        button {
-            background: white;
-            color: #764ba2;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 50px;
-            font-size: 16px;
-            cursor: pointer;
-            margin-top: 20px;
-            transition: transform 0.2s;
+
+        // Run code
+        function runCode() {
+            files[currentFile].content = editor.getValue();
+            
+            // Clear console
+            document.getElementById('console-output').innerHTML = '';
+            
+            // Create preview
+            const output = document.createElement('iframe');
+            output.style.width = '100%';
+            output.style.height = '100%';
+            output.style.border = 'none';
+            output.style.background = 'white';
+            
+            const doc = output.contentDocument || output.contentWindow.document;
+            doc.open();
+            
+            if (currentFile.endsWith('.html')) {
+                doc.write(files[currentFile].content);
+            } else {
+                // Create HTML wrapper
+                doc.write(`
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <style>${files['styles.css']?.content || ''}</style>
+                    </head>
+                    <body>
+                        <div id="app"></div>
+                        <script>${files['script.js']?.content || ''}</script>
+                    </body>
+                    </html>
+                `);
+            }
+            doc.close();
+            
+            // Show in output panel
+            const panelContent = document.getElementById('panelContent');
+            panelContent.innerHTML = '';
+            panelContent.appendChild(output);
+            
+            addConsoleMessage('log', ['Code executed successfully']);
         }
-        button:hover {
-            transform: translateY(-2px);
+
+        // Format code
+        function formatCode() {
+            editor.getAction('editor.action.formatDocument').run();
         }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>Welcome to Web Playground</h1>
-        <p>Edit this code and click Run to see your changes. You can also export it as HTML, CSS, or JS files!</p>
-        <button onclick="showMessage()">Click Me</button>
-        <p id="output-text"></p>
-    </div>
-    
-    <script>
-        function showMessage() {
-            document.getElementById('output-text').textContent = 'Code exported successfully!';
-            setTimeout(() => {
-                document.getElementById('output-text').textContent = '';
-            }, 2000);
+
+        // Toggle console
+        function toggleConsole() {
+            const panel = document.getElementById('bottomPanel');
+            panel.style.display = panel.style.display === 'none' ? 'flex' : 'none';
         }
-    </script>
-</body>
-</html>`;
+
+        // Switch panel
+        function switchPanel(panel) {
+            document.querySelectorAll('.panel-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
         }
-        
+
+        // Open file
+        function openFile() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.onchange = (e) => {
+                const file = e.target.files[0];
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const filename = file.name;
+                    const extension = filename.split('.').pop();
+                    let language = 'plaintext';
+                    
+                    if (extension === 'html') language = 'html';
+                    else if (extension === 'css') language = 'css';
+                    else if (extension === 'js') language = 'javascript';
+                    
+                    files[filename] = {
+                        name: filename,
+                        language: language,
+                        content: event.target.result
+                    };
+                    
+                    // Add to UI and switch
+                    addFileToUI(filename);
+                    switchToFile(filename);
+                };
+                reader.readAsText(file);
+            };
+            input.click();
+        }
+
+        function addFileToUI(filename) {
+            const extension = filename.split('.').pop();
+            let icon = 'fa-file';
+            if (extension === 'html') icon = 'fa-html5';
+            else if (extension === 'css') icon = 'fa-css3-alt';
+            else if (extension === 'js') icon = 'fa-js';
+            
+            // Add to file tree
+            const fileTree = document.getElementById('fileTree');
+            const li = document.createElement('li');
+            li.className = 'file-item';
+            li.onclick = () => switchToFile(filename);
+            li.innerHTML = `<i class="fab ${icon}"></i> ${filename}`;
+            fileTree.appendChild(li);
+            
+            // Add tab
+            const tabs = document.getElementById('editorTabs');
+            const tab = document.createElement('div');
+            tab.className = 'tab';
+            tab.dataset.file = filename;
+            tab.innerHTML = `<i class="fab ${icon}"></i> ${filename}
+                <span class="close-tab" onclick="closeTab(event, '${filename}')">×</span>`;
+            tabs.appendChild(tab);
+        }
+
+        // GitHub integration
+        function pushToGitHub() {
+            document.getElementById('modalTitle').textContent = 'Push to GitHub';
+            document.getElementById('modalTitle').dataset.action = 'push';
+            document.getElementById('githubModal').style.display = 'flex';
+        }
+
+        function cloneFromGitHub() {
+            document.getElementById('modalTitle').textContent = 'Clone from GitHub';
+            document.getElementById('modalTitle').dataset.action = 'clone';
+            document.getElementById('githubModal').style.display = 'flex';
+        }
+
+        function performGitHubAction() {
+            const action = document.getElementById('modalTitle').dataset.action;
+            const repoUrl = document.getElementById('repoUrl').value;
+            const commitMessage = document.getElementById('commitMessage').value || 'Update code';
+            
+            if (action === 'push') {
+                // Create GitHub push URL
+                const pushUrl = `https://github.com/new?name=${repoUrl}&description=Created with Code Editor Pro`;
+                window.open(pushUrl, '_blank');
+                addConsoleMessage('log', [`Opening GitHub to create repository: ${repoUrl}`]);
+            } else if (action === 'clone') {
+                if (repoUrl.includes('github.com')) {
+                    addConsoleMessage('log', [`Cloning from: ${repoUrl}`]);
+                    addConsoleMessage('warn', ['Note: For full GitHub integration, use GitHub Codespaces or download this project']);
+                } else {
+                    addConsoleMessage('error', ['Invalid GitHub URL']);
+                }
+            }
+            
+            closeModal();
+        }
+
+        function closeModal() {
+            document.getElementById('githubModal').style.display = 'none';
+        }
+
+        // Utility functions
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
+        function showSettings() {
+            alert('Settings panel coming soon!');
+        }
+
         // Initialize
         window.onload = function() {
-            // Auto-run the initial code
-            setTimeout(runCode, 300);
+            addConsoleMessage('log', ['Code Editor Pro ready!']);
+            addConsoleMessage('log', ['Try creating a new file, running code, or formatting with the toolbar.']);
         };
     </script>
 </body>
